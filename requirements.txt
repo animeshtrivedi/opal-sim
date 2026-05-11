@@ -1,0 +1,7 @@
+numpy >= 2.2
+matplotlib >= 3.10
+simpy >= 4.1
+tqdm
+pytest >= 9.0
+black >= 25.0
+transformers >= 4.55.4 
