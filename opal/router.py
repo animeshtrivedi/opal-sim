@@ -67,6 +67,9 @@ class Router:
         # the values() or keys() of the dictionary above. But these are not _scriptable_
         # we cannot do dict.values()[2]. That we can in the set.
         self._active_worker_ids: list[int] = []
+        # Live queue depth per worker (worker_id -> in-flight request count).
+        # Incremented on route_request, decremented on completion; read by
+        # LeastLoaded routing and by the autoscaler in _per_second_scaling.
         self._outstanding_requests_per_worker: dict[int, int] = {}
         self._stats_request_allocated_per_worker: dict[int, int] = {}
         self.safe_add_workers(add_new_workers=self.num_workers)
@@ -123,7 +126,7 @@ class Router:
     def _per_second_scaling(self):
         while not self.opal_env.are_we_done():
             yield self.sim_env.timeout(1)
-            max_elements = max(self._outstanding_requests.values())
+            max_elements = max(self._outstanding_requests_per_worker.values())
             if max_elements > self.max_queue_threshold and len(self._active_workers) < self.max_workers:
                 yield self.sim_env.timeout(self.scale_latency)
                 self.safe_add_workers(add_new_workers=1)
